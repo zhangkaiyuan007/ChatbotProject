@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, ParamSpecArgs
 from utils import query_llm
 
 class Memory:
@@ -19,7 +19,9 @@ class Memory:
         - Add it to self.messages
         - Remember we only want to keep the last 3 messages (hint: list slicing can help here)
         """
-        pass
+        new_message = {'role': role, 'content': content}
+        self.messages.append(new_message)
+        self.messages = self.messages[-3:]
     
     def get_recent_messages(self) -> str:
         """
@@ -32,11 +34,17 @@ class Memory:
         - For each message, format it as "{Role}: {content}" with a newline
         - Remember to capitalize the role for readability
         - Return the final formatted string (hint: strip() can clean up extra whitespace)
-        """
-        pass
+        """ 
+        for msg in self.messages:
+            formatted_message = f" {msg['role'].capitalize()}, {msg['content']}\n"
+            return formatted_message.strip()
+        return ""    
 
+            
+        
+        
 class Chatbot:
-    """Base chatbot class with core functionality"""
+    """Base chatbot class with core functionality"""  
     def __init__(self, name: str):
         self.name: str = name
         self.memory: Memory = Memory()
@@ -54,13 +62,15 @@ class Chatbot:
         - How can you include the conversation history?
         - How should you structure the prompt to be clear?
         """
-        pass
+        prompt = f"You are a helpful assistant named {self.name}. You are given the following message from the user: {user_input}. You should use the conversation history: {self.memory.get_recent_messages()} to provide clear, concise responses tailored to user needs, using examples or structured formats when explaining complex topics. You transparently acknowledge limitations (e.g., inability to access real-time data) and balance utility with responsibility, adhering to both technical constraints and ethical guidelines. You are not a substitute for a human expert, but you can provide helpful advice and assistance when needed."
+        return prompt
+
     
     def generate_response(self, user_input: str) -> str:
         """
         Generate a response to user input
         Args:
-            user_input: The user's message
+            user_input: The user's input
         Returns:
             The chatbot's response
         
@@ -71,7 +81,11 @@ class Chatbot:
         - Store the bot's response in memory before returning it
         - Make sure to handle the message storage and LLM query in the right order!
         """
-        pass
+        self.memory.add_message('user', user_input)
+        prompt = self._create_prompt(user_input)
+        response = query_llm(prompt)
+        self.memory.add_message('bot', response)
+        return response
 
 class FriendlyBot(Chatbot):
     """A casual and friendly personality"""
@@ -84,10 +98,11 @@ class FriendlyBot(Chatbot):
         - What personality traits should be included?
         - How is this different from the base chatbot?
         """
-        pass
+        prompt = f"You are a friendly assistant named {self.name}. You are given the following message from the user: {user_input}. You should use the conversation history: {self.memory.get_recent_messages()} to provide warm and friendly responses. In tone, you can use emojis and casual language (e.g. Hi there!) to feel approachable. You should also avoid technical jargon and use simple language. In clarity, clearly states the action ([*save your changes*]). And also provides simple binary choices. In empowerment, reassures the user with positive messages (e.g. Need more details? Just ask!) to reduce anxiety. In visual cues, use icons guide quick decision-making."
+        return prompt
 
 class TeacherBot(Chatbot):
-    """A more formal, educational personality"""
+    """A more formal, educational personanality"""
     def __init__(self, name: str, subject: str):
         super().__init__(name)
         self.subject = subject
@@ -101,8 +116,9 @@ class TeacherBot(Chatbot):
         - How can you incorporate the subject being taught?
         - What makes a good teaching personality?
         """
-        pass
-
+        prompt = f"You are a patient, knowledgeable, and supportive teacher named {self.name}. You are dedicated to helping students aged 18-25 understand the subject of {self.subject}. A student has asked the following question: {user_input}. Use the previous conversation history: {self.memory.get_recent_messages()} to guide students understanding. Prioritize conceptual clarity over rote answers. Adapt explanations to the user's stated proficiency level(beginner/intermediate/advanced). Key features to embed: 1. Universal Pedagogy: Apply Bloom's Taxonomy, start with remembering facts -> progress to analysis/creation; Use Dual Coding Theory: Combine verbal explanations with visual analogies; Implement Spaced Repetition: Suggest review timelines for key concepts. 2. Subject-Specific Strategies: Math/Science: Break problems into GRASP steps (Given, Required, Approach, Solve, Paraphrase); Demonstrate with real-world applications (e.g., calculus in economics). Humanities: Teach PEEL structure (Point, Evidence, Explanation, Link) for essays; Compare historical events through modern parallels. Languages: Apply Comprehensible Input theory (i+1 level challenges); Suggest contextual vocabulary building techniques. 3. Error handling Protocol: if misunderstanding detected, identify knowledge gap using diagnostic questioning, provide scaffolded hints (not direct answers), offer parallel practice problems. 4. Output Formatting Rules: structure responses as: [Concept Map] -> [Key Principles] -> [Example] -> [Walkthrough] -> [Self-Test Quiz]; use emojis as section deviders."
+        return prompt
+        
 def main():
     """Main interaction loop"""
     # Let user choose personality
